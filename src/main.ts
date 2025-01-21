@@ -1,14 +1,13 @@
 const MAX_PUNTUACION = 7.5;
 let puntuacionActual = 0;
 let gameOver = false;
-let simulacionUsada = false; // Variable para controlar el uso de simulación
+let simulacionUsada = false;
 
 interface Carta {
   value: number;
   img: string;
 }
 
-// Listado de cartas y sus valores.. En TS indicamos que Card es un array donde cada elemento es un objeto tipo "card"
 const cartas: Carta[] = [
   {
     value: 1,
@@ -52,153 +51,186 @@ const cartas: Carta[] = [
   },
 ];
 
-// DOM elements. Definimos tipos con "as" //prettier cambio de linea
-const scoreElement = document.getElementById("puntuacion") as HTMLSpanElement;
-const cardImage = document.getElementById("img-cartas") as HTMLImageElement;
-const messageElement = document.getElementById("mensaje") as HTMLDivElement;
-const btnPedir = document.getElementById("btn-pedir") as HTMLButtonElement;
-const btnPlantarse = document.getElementById(
-  "btn-plantarse"
-) as HTMLButtonElement;
-const btnNuevaPartida = document.getElementById(
-  "btn-nueva-partida"
-) as HTMLButtonElement;
-const btnVerQuePasaba = document.getElementById(
-  "btn-ver-que-pasaba"
-) as HTMLButtonElement;
-
-// Validar elementos del DOM
-if (
-  !scoreElement ||
-  !cardImage ||
-  !messageElement ||
-  !btnPedir ||
-  !btnPlantarse ||
-  !btnNuevaPartida ||
-  !btnVerQuePasaba
-) {
-  throw new Error("Uno o más elementos del DOM no fueron encontrados.");
+const scoreElement = document.getElementById("puntuacion");
+if (!(scoreElement instanceof HTMLSpanElement)) {
+  throw new Error("El elemento con id 'puntuacion' no es un HTMLSpanElement");
 }
 
-// Función para generar una carta aleatoria
-const dameCarta = (): Carta =>
-  cartas[Math.floor(Math.random() * cartas.length)];
+const cardImage = document.getElementById("img-cartas");
+if (!(cardImage instanceof HTMLImageElement)) {
+  throw new Error("El elemento con id 'img-cartas' no es un HTMLImageElement");
+}
 
-// Mostrar mensaje
+const messageElement = document.getElementById("mensaje");
+if (!(messageElement instanceof HTMLDivElement)) {
+  throw new Error("El elemento con id 'mensaje' no es un HTMLDivElement");
+}
+
+const btnPedir = document.getElementById("btn-pedir");
+if (!(btnPedir instanceof HTMLButtonElement)) {
+  throw new Error("El elemento con id 'btn-pedir' no es un HTMLButtonElement");
+}
+
+const btnPlantarse = document.getElementById("btn-plantarse");
+if (!(btnPlantarse instanceof HTMLButtonElement)) {
+  throw new Error(
+    "El elemento con id 'btn-plantarse' no es un HTMLButtonElement"
+  );
+}
+
+const btnNuevaPartida = document.getElementById("btn-nueva-partida");
+if (!(btnNuevaPartida instanceof HTMLButtonElement)) {
+  throw new Error(
+    "El elemento con id 'btn-nueva-partida' no es un HTMLButtonElement"
+  );
+}
+
+const btnVerQuePasaba = document.getElementById("btn-ver-que-pasaba");
+if (!(btnVerQuePasaba instanceof HTMLButtonElement)) {
+  throw new Error(
+    "El elemento con id 'btn-ver-que-pasaba' no es un HTMLButtonElement"
+  );
+}
+
+// 1. Función que devuelve un número aleatorio
+const generarNumeroAleatorio = (max: number): number =>
+  Math.floor(Math.random() * max);
+
+// 2. Función que genera una carta aleatoria
+const generarCartaAleatoria = (): Carta =>
+  cartas[generarNumeroAleatorio(cartas.length)];
+
+// 3. Función que obtiene la URL de la carta
+const obtenerUrlCarta = (carta: Carta): string => carta.img;
+
+// 4. Función que pinta la carta en el HTML
+const pintarCartaEnHtml = (carta: Carta) => {
+  cardImage.src = obtenerUrlCarta(carta);
+};
+
+// 5. Función que devuelve los puntos de la carta
+const obtenerPuntosDeCarta = (carta: Carta): number => carta.value;
+
+// 6. Función que suma puntos y devuelve el resultado
+const sumarPuntos = (puntosActuales: number, nuevosPuntos: number): number =>
+  puntosActuales + nuevosPuntos;
+
+// 7. Función que actualiza el valor de score
+const actualizarScore = (nuevosPuntos: number) => {
+  puntuacionActual = sumarPuntos(puntuacionActual, nuevosPuntos);
+  scoreElement.textContent = puntuacionActual.toFixed(1);
+};
+
+// 8. Función que verifica si hemos ganado o perdido
+const verificarEstadoPartida = () => {
+  if (puntuacionActual === MAX_PUNTUACION) {
+    mostrarMensaje("¡Has ganado con 7.5 puntos!", "#28a745");
+    finalizarPartida();
+  } else if (puntuacionActual > MAX_PUNTUACION) {
+    mostrarMensaje("¡Te has pasado de 7.5 puntos! Has perdido.", "#dc3545");
+    finalizarPartida();
+  }
+};
+
+// 9. Función que verifica si la puntuación es exactamente 7.5
+const verificarPuntuacionExacta = (puntuacion: number) => {
+  if (puntuacion === MAX_PUNTUACION) {
+    mostrarMensaje(
+      "Hubieras acertado, qué pena que seas un cobarde",
+      "#ffcc00"
+    );
+  }
+};
+
+const finalizarPartida = () => {
+  gameOver = true;
+
+  // Deshabilitar los botones
+  btnPedir.disabled = true;
+  btnPlantarse.disabled = true;
+
+  // Mostrar botones para continuar o simular
+  btnNuevaPartida.hidden = false;
+  btnVerQuePasaba.hidden = simulacionUsada;
+};
+
+// Función para mostrar mensaje
 const mostrarMensaje = (mensaje: string, color: string = "#ff0000") => {
   messageElement.style.color = color;
   messageElement.textContent = mensaje;
 };
 
-// Actualizar puntuación
-const actualizarPuntuacion = (valor: number) => {
-  puntuacionActual += valor;
-  scoreElement.textContent = puntuacionActual.toFixed(1);
-};
-
-// Mostrar carta
-const mostrarCarta = (carta: Carta) => {
-  cardImage.src = carta.img;
-};
-
-// Comenzar nueva partida
-const nuevaPartida = () => {
-  puntuacionActual = 0;
-  gameOver = false;
-  simulacionUsada = false; //Reinicia el estado de la simulación
-  btnPedir.disabled = false;
-  btnPlantarse.disabled = false;
-  btnNuevaPartida.hidden = true;
-  btnVerQuePasaba.hidden = true;
-  mostrarCarta({
-    img: "https://raw.githubusercontent.com/Lemoncode/fotos-ejemplos/main/cartas/back.jpg",
-    value: 0,
-  }); //al ser la carta inicial, sin valor se da valor "0"
-  actualizarPuntuacion(0);
-  mostrarMensaje("¡Nueva partida! ¡Buena suerte!", "#000");
-};
-
-// Manejo del botón "Pedir Carta"
+// Botón "Pedir Carta"
 btnPedir.addEventListener("click", () => {
-  if (gameOver) return;
+  if (gameOver && !simulacionUsada) return; // Solo bloquear si se ha acabado el juego y no es simulación
 
-  const carta = dameCarta();
-  mostrarCarta(carta);
-  actualizarPuntuacion(carta.value);
+  const carta = generarCartaAleatoria();
+  pintarCartaEnHtml(carta);
+  actualizarScore(obtenerPuntosDeCarta(carta));
+  verificarEstadoPartida();
 
-  if (puntuacionActual > MAX_PUNTUACION) {
-    mostrarMensaje("¡Game Over! Te has pasado de 7.5 puntos.");
-    btnPedir.disabled = true;
-    btnPlantarse.disabled = true;
-    btnNuevaPartida.hidden = false;
-    gameOver = true; ///lo saca detrás del corchete
-  }
+  // Verificar si la puntuación es exactamente 7.5
+  verificarPuntuacionExacta(puntuacionActual);
 });
 
-// Manejo del botón "Plantarse"
+// Botón "Plantarse"
 btnPlantarse.addEventListener("click", () => {
   if (gameOver) return;
 
-  let mensaje = "";
-  switch (true) {
-    case puntuacionActual < 4:
-      mensaje = "Has sido muy conservador.";
-      break;
-    case puntuacionActual === 5:
-      mensaje = "Te ha entrado el canguelo, ¿eh?";
-      break;
-    case puntuacionActual < 7.5:
-      mensaje = "Casi, casi...";
-      break;
-    case puntuacionActual === 7.5:
-      mensaje = "¡Lo has clavado! ¡Enhorabuena!";
-      break;
-  }
+  let mensaje =
+    puntuacionActual === 7.5
+      ? "¡Lo has clavado! ¡Enhorabuena!"
+      : puntuacionActual < 7.5
+      ? "Casi, casi..."
+      : "Te has pasado.";
 
   mostrarMensaje(mensaje, "#007bff");
-  btnPedir.disabled = true;
-  btnPlantarse.disabled = true;
-  btnNuevaPartida.hidden = false;
-  if (!simulacionUsada) {
-    btnVerQuePasaba.hidden = false;
-  }
-  gameOver = true;
+  finalizarPartida();
 });
 
-// Función para mostrar qué habría pasado
-const verQueHabriaPasado = () => {
-  const carta = dameCarta(); // Obtener una carta aleatoria
-  mostrarCarta(carta); // Mostrar la carta
-  actualizarPuntuacion(carta.value); // Actualizar puntuación visual
+// Botón "Nueva Partida"
+btnNuevaPartida.addEventListener("click", () => {
+  puntuacionActual = 0;
+  gameOver = false;
+  simulacionUsada = false;
 
-  if (puntuacionActual > MAX_PUNTUACION) {
-    mostrarMensaje("Te has pasado. ¡Ahora lo sabes!", "#800080");
-    btnPedir.disabled = true; // Deshabilitar el botón "Pedir Carta"
-    btnPlantarse.disabled = true; // Deshabilitar "Plantarse" si el jugador se pasa
-    btnVerQuePasaba.hidden = true; // Ocultar botón tras pasarse
-    simulacionUsada = true; //Confirma que ya se usó la simulación
-  } else {
-    mostrarMensaje(
-      `Has sacado una carta de simulación. Puedes seguir pidiendo o plantarte.`,
-      "#007bff"
-    );
-    btnPedir.disabled = false; // Rehabilitar el botón "Pedir Carta"
-    btnPlantarse.disabled = false; // Mantener habilitado "Plantarse"
-    gameOver = false; //Así el juego no terminaa tfas la simulación
-  }
-};
+  // Habilitar los botones
+  btnPedir.disabled = false;
+  btnPlantarse.disabled = false;
 
-// Manejo del botón "Ver qué habría pasado"
+  // Ocultar botones y reiniciar mensajes
+  btnNuevaPartida.hidden = true;
+  btnVerQuePasaba.hidden = true;
+
+  // Reiniciar la carta inicial
+  pintarCartaEnHtml({
+    img: "https://raw.githubusercontent.com/Lemoncode/fotos-ejemplos/main/cartas/back.jpg",
+    value: 0,
+  });
+
+  // Reiniciar puntuación y mensaje
+  actualizarScore(0);
+  mostrarMensaje("¡Nueva partida! ¡Buena suerte!", "#000");
+});
+
+// Botón "Ver Qué Habría Pasado"
 btnVerQuePasaba.addEventListener("click", () => {
-  if (simulacionUsada) return; //Evita aque se use más de una vez
-  simulacionUsada = true; //Registra que ya se usó
-  btnVerQuePasaba.hidden = true; // Ocultar el botón al hacer clic
-  btnPedir.disabled = true; // Deshabilitar inicialmente "Pedir Carta"
-  verQueHabriaPasado(); // Mostrar una carta
+  if (simulacionUsada) return;
+
+  simulacionUsada = true;
+  btnVerQuePasaba.hidden = true;
+  btnPedir.disabled = false;
+  btnPlantarse.disabled = false;
+
+  // Simulación: pedir una carta como si estuviera jugando
+  const carta = generarCartaAleatoria();
+  pintarCartaEnHtml(carta);
+  actualizarScore(obtenerPuntosDeCarta(carta));
+  verificarEstadoPartida();
+
+  // Verificar si la puntuación es exactamente 7.5
+  verificarPuntuacionExacta(puntuacionActual);
 });
 
-// Manejo del botón "Nueva Partida"
-btnNuevaPartida.addEventListener("click", nuevaPartida);
-
-// Iniciar partida inicial
-nuevaPartida();
+// Iniciar partida inicial automáticamente
+btnNuevaPartida.click();
